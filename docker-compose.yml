@@ -5,15 +5,20 @@ services:
     image: postgres:16-alpine
     container_name: student-db
     environment:
-      POSTGRES_DB: studentdb
+      POSTGRES_DB: studentManagementDB  # Changed to match your DB name
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: "0000"  # Changed to match your password
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - student-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   app:
     build:
@@ -21,14 +26,15 @@ services:
       dockerfile: Dockerfile
     container_name: student-app
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/studentdb
+      # Override localhost with postgres container name
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/studentManagementDB
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_DATASOURCE_PASSWORD: "0000"
     ports:
-      - "8080:8080"
+      - "8089:8089"  # Matches your server.port
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - student-network
 
